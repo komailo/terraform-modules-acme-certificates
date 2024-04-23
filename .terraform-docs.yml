@@ -1,0 +1,48 @@
+formatter: "markdown table" # this is required
+
+content: |-
+  {{ .Header }}
+
+  ## Quick Start Guide
+
+  ### Local Filesystem Deployment
+
+  ```hcl
+  {{ include "examples/barebones.tf" }}
+  {{ include "examples/basic-deploy-local-filesystem/main.tf" }}
+  ```
+
+  {{ .Footer }}
+
+  {{ .Inputs }}
+
+  {{ .Modules }}
+
+  {{ .Outputs }}
+
+  {{ .Providers }}
+
+  {{ .Requirements }}
+
+  {{ .Resources }}
+header-from: .docs/header.md
+footer-from: .docs/footer.md
+
+output:
+  file: README.md
+  mode: inject
+  template: |-
+    <!-- BEGIN_TF_DOCS -->
+    {{ .Content }}
+    <!-- END_TF_DOCS -->
+
+recursive:
+  enabled: true
+  path: modules
+
+settings:
+  hide-empty: true
+
+sort:
+  enabled: true
+  by: required
