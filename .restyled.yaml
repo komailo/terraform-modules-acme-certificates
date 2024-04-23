@@ -1,0 +1,4 @@
+auto: true
+pull_requests: false
+also_exclude:
+  - README.md
