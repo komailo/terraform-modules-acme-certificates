@@ -156,3 +156,78 @@ run "test_input_args_to_acme_certificate" {
         error_message = "Value for revoke_certificate_reason does not match input value"
     }
 }
+
+run "test_input_arg_certificate_signing_requests_with_latest_filename" {
+    command = plan
+    variables {
+        acme_registration_account_key_pem = run.setup_tests.acme_registration_account_key_pem
+        acme_registration_email = "hello@example.com"
+        certificate_signing_requests = {
+            "my_certs" = {
+                csr_files = ["/a/path/somewhere/latest.csr"]
+            }
+        }
+        dns_challenges = {
+            "foo" = {
+                config = {
+                    FOO_ENV_VAR             = "5678"
+
+                }
+            }
+        }        
+    }
+
+    expect_failures = [
+        var.certificate_signing_requests,
+    ]
+}
+
+run "test_input_arg_certificate_signing_requests_with_colan_in_filename" {
+    command = plan
+    variables {
+        acme_registration_account_key_pem = run.setup_tests.acme_registration_account_key_pem
+        acme_registration_email = "hello@example.com"
+        certificate_signing_requests = {
+            "my_certs" = {
+                csr_files = ["/a/path/somewhere/hello:how.csr"]
+            }
+        }
+        dns_challenges = {
+            "foo" = {
+                config = {
+                    FOO_ENV_VAR             = "5678"
+
+                }
+            }
+        }        
+    }
+
+    expect_failures = [
+        var.certificate_signing_requests,
+    ]
+}
+
+run "test_input_arg_certificate_signing_requests_with_colan_in_key" {
+    command = plan
+    variables {
+        acme_registration_account_key_pem = run.setup_tests.acme_registration_account_key_pem
+        acme_registration_email = "hello@example.com"
+        certificate_signing_requests = {
+            "my:certs" = {
+                csr_files = ["/a/path/somewhere/how.csr"]
+            }
+        }
+        dns_challenges = {
+            "foo" = {
+                config = {
+                    FOO_ENV_VAR             = "5678"
+
+                }
+            }
+        }        
+    }
+
+    expect_failures = [
+        var.certificate_signing_requests,
+    ]
+}

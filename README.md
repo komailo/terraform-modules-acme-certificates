@@ -1,4 +1,3 @@
-# terraform-modules-acme-certificates
 <!-- BEGIN_TF_DOCS -->
 # Terraform Modules: ACME Certificate Issuing and Deployment
 
