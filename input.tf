@@ -30,6 +30,27 @@ variable "certificate_signing_requests" {
   type = map(object({
     csr_files = list(string)
   }))
+
+  validation {
+    condition = alltrue(
+      [for csr_file in flatten([for item in var.certificate_signing_requests : item.csr_files]) : replace(basename(csr_file), ".csr", "") != "latest"]
+    )
+    error_message = "The csr_files list must not contain a file named 'latest'."
+  }
+
+  validation {
+    condition = alltrue(
+      [for csr_file in flatten([for item in var.certificate_signing_requests : item.csr_files]) : !strcontains(replace(basename(csr_file), ".csr", ""), ":")]
+    )
+    error_message = "The csr_files list must not contain a file with : (colan) in the file name"
+  }
+
+  validation {
+    condition = alltrue(
+      [for key in keys(var.certificate_signing_requests) : !strcontains(key, ":")]
+    )
+    error_message = "The certificate ID or the key must not contain : (colan) in the name"
+  }
 }
 
 variable "disable_complete_propagation" {
