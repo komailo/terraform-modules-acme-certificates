@@ -9,7 +9,7 @@ content: |-
 
   ```hcl
   {{ include "examples/barebones.tf" }}
-  {{ include "examples/basic-deploy-local-filesystem/main.tf" }}
+  {{ include "examples/basic-deploy-local/main.tf" }}
   ```
 
   {{ .Footer }}

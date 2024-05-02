@@ -1,5 +1,4 @@
 <!-- BEGIN_TF_DOCS -->
-
 # Terraform Modules: ACME Certificate Issuing and Deployment
 
 > :warning: This project is in active development. A proper release process will be added shortly. In the meantime, make sure you [select a ref](https://developer.hashicorp.com/terraform/language/modules/sources#selecting-a-revision) based on a commit SHA to avoid breaking your Terraform pipelines.
@@ -14,105 +13,102 @@ Key Features:
 
 ## Quick Start Guide
 
-### Single Project
+### Local Filesystem Deployment
 
 ```hcl
-module "cloudflare_pages_hugo_project" {
-  source       = "github.com/komailio/terraform-modules-cloudflare-pages-hugo"
-  account_id   = "my-cloudflare-account-id"
-  project_name = "komailio"
-  repo_owner   = "komailo"
-  repo_name    = "komail.io"
-  custom_domains = [
-    # Don't add www records, they will be created for you if `alias_www` is set to true (the default) in the module parameters.
-    {
-      name    = "komail.io"
-      zone_id = "my_zone_id"
-    },
-  ]
+# Create a private key and manage it via Terraform
+# Alternately you could create one securely and provide it as a PEM string to the module
+resource "tls_private_key" "acme_registration_private_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
 }
-```
 
-### Multiple Projects
-
-```hcl
 locals {
-  account_id = "123456789"
-  cloudflare_pages = [
+  # dir where all CSR files are placed. You can use any directory structure you like.
+  csr_dirs = path.root
+
+  certificate_signing_requests = {
+    "example.com" = {
+      csr_files = [fileset(local.csr_dirs, "example.com/*.csr")]
+    }
+  }
+}
+module "acme_certificates" {
+  source                             = "github.com/komailio/terraform-acme-certificates"
+  acme_registration_account_key_pems = tls_private_key.acme_registration_private_key.private_key_pem
+  acme_registration_email            = "noreply@example.com"
+
+  certificate_signing_requests = local.certificate_signing_requests
+
+  deploy_local_file_path = "${path.root}/deploy_local_file"
+
+  dns_challenge = [
     {
-      name       = "komailio"
-      repo_owner = "komailo"
-      repo_name  = "komail.io"
-      custom_domains = [
-        # Don't add www records, they will be created for you if `alias_www` is set to true (the default) in the module parameters.
-        {
-          name    = "komail.io"
-          zone_id = "my_zone_id"
-        },
-      ]
+      provider = "dynu"
+      config = {
+        DYNU_API_KEY             = "my-api-key"
+        DYNU_HTTP_TIMEOUT        = "10"
+        DYNU_POLLING_INTERVAL    = "10"
+        DYNU_PROPAGATION_TIMEOUT = "600"
+        DYNU_TTL                 = "60"
+      }
     }
   ]
 }
-
-module "cloudflare_pages_hugo_project" {
-  for_each       = { for cloudflare_page in local.cloudflare_pages : cloudflare_page.name => cloudflare_page }
-  source         = "github.com/komailo/terraform-modules-cloudflare-pages-hugo"
-  account_id     = local.account_id
-  project_name   = each.key
-  repo_owner     = each.value.repo_owner
-  repo_name      = each.value.repo_name
-  custom_domains = each.value.custom_domains
-}
 ```
+
+
 
 ## Inputs
 
-| Name                                                                                                                              | Description                                                                                                                                                                                                                                                                                                          | Type                | Default    | Required |
-| --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ---------- | :------: |
-| <a name="input_account_id"></a> [account_id](#input_account_id)                                                                   | The Cloudflare account ID.                                                                                                                                                                                                                                                                                           | `string`            | n/a        |   yes    |
-| <a name="input_project_name"></a> [project_name](#input_project_name)                                                             | The name of the Cloudflare pages project.                                                                                                                                                                                                                                                                            | `string`            | n/a        |   yes    |
-| <a name="input_repo_name"></a> [repo_name](#input_repo_name)                                                                      | The name of the repository. This is the part after the `repo_owner` in the repository slug.                                                                                                                                                                                                                          | `string`            | n/a        |   yes    |
-| <a name="input_repo_owner"></a> [repo_owner](#input_repo_owner)                                                                   | The owner of the repository. This is the very first part of the repository slug.                                                                                                                                                                                                                                     | `string`            | n/a        |   yes    |
-| <a name="input_alias_www"></a> [alias_www](#input_alias_www)                                                                      | If true, an alias record (CNAME) `www` will be created for all custom domains                                                                                                                                                                                                                                        | `bool`              | `true`     |    no    |
-| <a name="input_build_root_dir"></a> [build_root_dir](#input_build_root_dir)                                                       | The root directory in the repository where the build command should be run. Defaults to the root of the repository.                                                                                                                                                                                                  | `string`            | `""`       |    no    |
-| <a name="input_custom_domains"></a> [custom_domains](#input_custom_domains)                                                       | A list of custom domains to associate with the project. Do not add domains with www. prefix here, use the `alias_www` variable instead. Each custom domain must have a `name` and `zone_id` attribute. The `name` attribute is the domain name and the `zone_id` attribute is the Cloudflare zone ID for the domain. | `list(map(string))` | `[]`       |    no    |
-| <a name="input_deployments_enabled"></a> [deployments_enabled](#input_deployments_enabled)                                        | Enable deployments for the project.                                                                                                                                                                                                                                                                                  | `bool`              | `true`     |    no    |
-| <a name="input_environment_variables"></a> [environment_variables](#input_environment_variables)                                  | A map of environment variables to set for the project in production and preview deployments. The map key is the environment variable name and the value is the environment variable value.                                                                                                                           | `map(string)`       | `{}`       |    no    |
-| <a name="input_pr_comments_enabled"></a> [pr_comments_enabled](#input_pr_comments_enabled)                                        | Enable Cloudflare Pages to comment on Pull Requests if preview deployments are enabled.                                                                                                                                                                                                                              | `bool`              | `true`     |    no    |
-| <a name="input_preview_environment_variables"></a> [preview_environment_variables](#input_preview_environment_variables)          | A map of environment variables to set for the project in preview deployments in precedence to `environment_variables`. The map key is the environment variable name and the value is the environment variable value.                                                                                                 | `map(string)`       | `{}`       |    no    |
-| <a name="input_production_branch"></a> [production_branch](#input_production_branch)                                              | The Git branch to use for production deployments.                                                                                                                                                                                                                                                                    | `string`            | `"main"`   |    no    |
-| <a name="input_production_environment_variables"></a> [production_environment_variables](#input_production_environment_variables) | A map of environment variables to set for the project in production deployments in precedence to `environment_variables`. The map key is the environment variable name and the value is the environment variable value.                                                                                              | `map(string)`       | `{}`       |    no    |
-| <a name="input_repo_type"></a> [repo_type](#input_repo_type)                                                                      | The SCM platform where the repository is hosted. Valid values are 'github' or 'gitlab'.                                                                                                                                                                                                                              | `string`            | `"github"` |    no    |
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_acme_registration_account_key_pem"></a> [acme\_registration\_account\_key\_pem](#input\_acme\_registration\_account\_key\_pem) | The private key used to identify the account. | `string` | n/a | yes |
+| <a name="input_acme_registration_email"></a> [acme\_registration\_email](#input\_acme\_registration\_email) | The email address to use for ACME registration | `string` | n/a | yes |
+| <a name="input_certificate_signing_requests"></a> [certificate\_signing\_requests](#input\_certificate\_signing\_requests) | The CSRs metadata to generate certificates for. This does contain the actual CSRs but the pointer to the CSRs in the filesystem. | <pre>map(object({<br>    csr_files = list(string)<br>  }))</pre> | n/a | yes |
+| <a name="input_dns_challenges"></a> [dns\_challenges](#input\_dns\_challenges) | The DNS challenges to use in fulfilling the request, multiple DNS providers can be specified. See [Using DNS challenges](https://registry.terraform.io/providers/vancluever/acme/latest/docs/resources/certificate#using-dns-challenges) for more details. | <pre>map(object({<br>    config = optional(map(string))<br>  }))</pre> | n/a | yes |
+| <a name="input_acme_registration_external_account_binding"></a> [acme\_registration\_external\_account\_binding](#input\_acme\_registration\_external\_account\_binding) | An external account binding for the registration, usually used to link the registration with an account in a commercial CA. | <pre>object({<br>    key_id      = string<br>    hmac_base64 = string<br>  })</pre> | `null` | no |
+| <a name="input_cert_timeout"></a> [cert\_timeout](#input\_cert\_timeout) | The timeout for certificate issuance in seconds. | `number` | `null` | no |
+| <a name="input_deploy_local_file_path"></a> [deploy\_local\_file\_path](#input\_deploy\_local\_file\_path) | The local path to the directory to write the certificates to. Individual certificates will be written to subdirectories of this path named after the subject of the CSR. | `string` | `null` | no |
+| <a name="input_disable_complete_propagation"></a> [disable\_complete\_propagation](#input\_disable\_complete\_propagation) | Disable the requirement for full propagation of the TXT challenge records before proceeding with validation. | `bool` | `false` | no |
+| <a name="input_min_days_remaining"></a> [min\_days\_remaining](#input\_min\_days\_remaining) | The minimum number of days remaining on a certificate before it should be renewed. A value of less than 0 means that the certificate will never be renewed. | `number` | `30` | no |
+| <a name="input_no_deploy_local_file_ca_pem"></a> [no\_deploy\_local\_file\_ca\_pem](#input\_no\_deploy\_local\_file\_ca\_pem) | If true, the CA certificate will not be written to disk to the path specified in certs\_home\_path | `bool` | `false` | no |
+| <a name="input_no_deploy_local_file_full_chain"></a> [no\_deploy\_local\_file\_full\_chain](#input\_no\_deploy\_local\_file\_full\_chain) | If true, the full chain, which includes the CA certificate and signed certificate, will not be written to disk to the path specified in certs\_home\_path | `bool` | `false` | no |
+| <a name="input_no_deploy_local_file_issued_certificate_pem"></a> [no\_deploy\_local\_file\_issued\_certificate\_pem](#input\_no\_deploy\_local\_file\_issued\_certificate\_pem) | If true, the CA signed certificate will not be written to disk to the path specified in certs\_home\_path | `bool` | `false` | no |
+| <a name="input_pre_check_delay"></a> [pre\_check\_delay](#input\_pre\_check\_delay) | The delay to add after every DNS challenge record to allow for extra time for DNS propagation before the certificate is requested. Use this option if you observe issues with requesting certificates even when DNS challenge records get added successfully. Units are in seconds. | `number` | `0` | no |
+| <a name="input_recursive_nameservers"></a> [recursive\_nameservers](#input\_recursive\_nameservers) | The recursive nameservers to use for DNS resolution | `list(string)` | `null` | no |
+| <a name="input_revoke_certificate_on_destroy"></a> [revoke\_certificate\_on\_destroy](#input\_revoke\_certificate\_on\_destroy) | Enables revocation of a certificate upon destroy of the attached resource, which includes when a resource is re-created. | `bool` | `null` | no |
+| <a name="input_revoke_certificate_reason"></a> [revoke\_certificate\_reason](#input\_revoke\_certificate\_reason) | The reason for revoking the certificate. See [RFC 5280](https://datatracker.ietf.org/doc/html/rfc5280#section-5.3.1) for more details. See [upstream](https://registry.terraform.io/providers/xaevman/acme/latest/docs/resources/certificate#revoke_certificate_reason) documentation for more details. | `string` | `null` | no |
+
+
+
+## Outputs
+
+| Name | Description |
+|------|-------------|
+| <a name="output_certs"></a> [certs](#output\_certs) | n/a |
 
 ## Providers
 
-| Name                                                                  | Version |
-| --------------------------------------------------------------------- | ------- |
-| <a name="provider_cloudflare"></a> [cloudflare](#provider_cloudflare) | ~> 4.0  |
+| Name | Version |
+|------|---------|
+| <a name="provider_acme"></a> [acme](#provider\_acme) | 2.21.0 |
+| <a name="provider_local"></a> [local](#provider\_local) | 2.5.1 |
 
 ## Requirements
 
-| Name                                                                        | Version |
-| --------------------------------------------------------------------------- | ------- |
-| <a name="requirement_terraform"></a> [terraform](#requirement_terraform)    | ~> 1.1  |
-| <a name="requirement_cloudflare"></a> [cloudflare](#requirement_cloudflare) | ~> 4.0  |
+| Name | Version |
+|------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.7 |
+| <a name="requirement_acme"></a> [acme](#requirement\_acme) | ~> 2.0 |
 
 ## Resources
 
-| Name                                                                                                                                                               | Type     |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
-| [cloudflare_pages_domain.page_domains](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/pages_domain)                           | resource |
-| [cloudflare_pages_domain.www_alias](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/pages_domain)                              | resource |
-| [cloudflare_pages_project.cloudflare_pages_hugo_github_project](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/pages_project) | resource |
-| [cloudflare_record.page_domains](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/record)                                       | resource |
-| [cloudflare_record.www_alias](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs/resources/record)                                          | resource |
-
+| Name | Type |
+|------|------|
+| [acme_certificate.main](https://registry.terraform.io/providers/vancluever/acme/latest/docs/resources/certificate) | resource |
+| [acme_registration.main](https://registry.terraform.io/providers/vancluever/acme/latest/docs/resources/registration) | resource |
+| [local_file.ca_pem](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
+| [local_file.full_chain](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
+| [local_file.issued_certificate_pem](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
 <!-- END_TF_DOCS -->
-
-## Terraform Cannot Enable Web Analytics
-
-At this time its not possible to enable Web Analytics from Terraform.
-The API token permission required is not known. You will have to manually create a Web Analytics resource and use the keys.
-
-https://github.com/cloudflare/terraform-provider-cloudflare/issues/2517#issuecomment-1617849763
-https://community.cloudflare.com/t/which-api-token-permissions-are-required-for-cloudflare-web-analytics-site/603102
