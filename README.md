@@ -1,7 +1,7 @@
 <!-- BEGIN_TF_DOCS -->
 # Terraform Modules: ACME Certificate Issuing and Deployment
 
-> :warning: This project is in active development. A proper release process will be added shortly. In the meantime, make sure you [select a ref](https://developer.hashicorp.com/terraform/language/modules/sources#selecting-a-revision) based on a commit SHA to avoid breaking your Terraform pipelines.
+> :warning: This project is in active development.
 
 This Terraform module simplifies the process of obtaining a signed certificate from an ACME server and deploying it to one of the supported destinations. While ACME protocol provides multiple methods to validate control of the domain in the subject for which the certificate is being issued, this module only interfaces with DNS validation.
 
@@ -34,17 +34,16 @@ locals {
   }
 }
 module "acme_certificates" {
-  source                             = "github.com/komailio/terraform-acme-certificates"
-  acme_registration_account_key_pems = tls_private_key.acme_registration_private_key.private_key_pem
-  acme_registration_email            = "noreply@example.com"
+  source                            = "komailo/acme-certificates/modules"
+  acme_registration_account_key_pem = tls_private_key.acme_registration_private_key.private_key_pem
+  acme_registration_email           = "noreply@example.com"
 
   certificate_signing_requests = local.certificate_signing_requests
 
   deploy_local_file_path = "${path.root}/deploy_local_file"
 
-  dns_challenge = [
-    {
-      provider = "dynu"
+  dns_challenges = {
+    dynu = {
       config = {
         DYNU_API_KEY             = "my-api-key"
         DYNU_HTTP_TIMEOUT        = "10"
@@ -53,7 +52,7 @@ module "acme_certificates" {
         DYNU_TTL                 = "60"
       }
     }
-  ]
+  }
 }
 ```
 
