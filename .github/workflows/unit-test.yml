@@ -1,0 +1,15 @@
+name: Unit Tests
+on: push
+jobs:
+  terraform-tests:
+    name: Run Terraform Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7"
+
+      - run: terraform init
+      - run: terraform test
