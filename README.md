@@ -107,7 +107,7 @@ module "acme_certificates" {
 |------|------|
 | [acme_certificate.main](https://registry.terraform.io/providers/vancluever/acme/latest/docs/resources/certificate) | resource |
 | [acme_registration.main](https://registry.terraform.io/providers/vancluever/acme/latest/docs/resources/registration) | resource |
-| [local_file.ca_pem](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
-| [local_file.full_chain](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
-| [local_file.issued_certificate_pem](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file) | resource |
+| [local_sensitive_file.ca_pem](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/sensitive_file) | resource |
+| [local_sensitive_file.full_chain](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/sensitive_file) | resource |
+| [local_sensitive_file.issued_certificate_pem](https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/sensitive_file) | resource |
 <!-- END_TF_DOCS -->
