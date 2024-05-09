@@ -3,11 +3,11 @@ provider "acme" {
 }
 
 variables {
-    acme_registration_email = "my-exam@example.com"
+    acme_registration_email = "blue.cat8925@fastmail.com"
     dns_challenges = {
         "dynu" = {
             config = {
-                DYNU_API_KEY             = "my-api-key"
+                DYNU_API_KEY             = "eWVbe7bUf5ggg4V363fXZ33635YWZde5"
                 DYNU_HTTP_TIMEOUT        = "10"
                 DYNU_POLLING_INTERVAL    = "10"
                 DYNU_PROPAGATION_TIMEOUT = "600"
