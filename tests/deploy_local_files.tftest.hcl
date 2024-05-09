@@ -26,18 +26,18 @@ run "test_deploy_local_file_with_certs_home_path" {
     }
 
     assert {
-        condition     = local_file.full_chain["my_cert_id:main2"] != null
-        error_message = "local_file.full_chain is null"
+        condition     = local_sensitive_file.full_chain["my_cert_id:main2"] != null
+        error_message = "local_sensitive_file.full_chain is null"
     }
 
     assert {
-        condition     = local_file.issued_certificate_pem["my_cert_id:main2"] != null
-        error_message = "local_file.issued_certificate_pem is null"
+        condition     = local_sensitive_file.issued_certificate_pem["my_cert_id:main2"] != null
+        error_message = "local_sensitive_file.issued_certificate_pem is null"
     }
 
     assert {
-        condition     = local_file.ca_pem["my_cert_id:main2"] != null
-        error_message = "local_file.ca_pem is null"
+        condition     = local_sensitive_file.ca_pem["my_cert_id:main2"] != null
+        error_message = "local_sensitive_file.ca_pem is null"
     }
 
 }
@@ -60,18 +60,18 @@ run "test_no_deploy_local_file" {
     }
 
     assert {
-        condition     = length(local_file.full_chain) == 0
-        error_message = "local_file.full_chain is not empty"
+        condition     = length(local_sensitive_file.full_chain) == 0
+        error_message = "local_sensitive_file.full_chain is not empty"
     }
 
     assert {
-        condition     = length(local_file.issued_certificate_pem) == 0
-        error_message = "local_file.issued_certificate_pem is not empty"
+        condition     = length(local_sensitive_file.issued_certificate_pem) == 0
+        error_message = "local_sensitive_file.issued_certificate_pem is not empty"
     }
 
     assert {
-        condition     = length(local_file.ca_pem) == 0
-        error_message = "local_file.ca_pem is not empty"
+        condition     = length(local_sensitive_file.ca_pem) == 0
+        error_message = "local_sensitive_file.ca_pem is not empty"
     }
 
 }
