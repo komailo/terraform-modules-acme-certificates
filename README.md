@@ -91,8 +91,8 @@ module "acme_certificates" {
 
 | Name | Version |
 |------|---------|
-| <a name="provider_acme"></a> [acme](#provider\_acme) | 2.35.1 |
-| <a name="provider_local"></a> [local](#provider\_local) | 2.5.1 |
+| <a name="provider_acme"></a> [acme](#provider\_acme) | 2.44.1 |
+| <a name="provider_local"></a> [local](#provider\_local) | 2.6.2 |
 
 ## Requirements
 
