@@ -91,7 +91,7 @@ module "acme_certificates" {
 
 | Name | Version |
 |------|---------|
-| <a name="provider_acme"></a> [acme](#provider\_acme) | 2.35.1 |
+| <a name="provider_acme"></a> [acme](#provider\_acme) | 3.0.0 |
 | <a name="provider_local"></a> [local](#provider\_local) | 2.5.1 |
 
 ## Requirements
@@ -99,7 +99,7 @@ module "acme_certificates" {
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.7 |
-| <a name="requirement_acme"></a> [acme](#requirement\_acme) | ~> 2.0 |
+| <a name="requirement_acme"></a> [acme](#requirement\_acme) | ~> 3.0 |
 
 ## Resources
 
